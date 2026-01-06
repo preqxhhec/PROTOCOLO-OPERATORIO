@@ -1,0 +1,197 @@
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    background-color: #f0f8f5;
+    margin: 0;
+    padding: 0;
+    color: #333;
+}
+
+.login-container, .main-container {
+    max-width: 1100px;
+    margin: 40px auto;
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 6px 20px rgba(0,169,79,0.15);
+}
+
+.login-container {
+    max-width: 400px;
+    text-align: center;
+}
+
+h1 {
+    text-align: center;
+    color: #00a94f;
+    margin-bottom: 30px;
+}
+
+h2 {
+    color: #00a94f;
+    border-bottom: 2px solid #00a94f;
+    padding-bottom: 8px;
+    margin-top: 30px;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 15px;
+}
+
+.paciente-lineal {
+    grid-template-columns: 1.4fr 2.5fr 1.2fr 0.8fr 1fr !important;
+    gap: 15px;
+    align-items: end;
+}
+
+.full-width {
+    grid-column: 1 / -1;
+}
+
+label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: #4d4d4d;
+}
+
+input, select, textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    box-sizing: border-box;
+    font-size: 16px;
+}
+
+input[readonly] {
+    background-color: #e9f7ef;
+    color: #00a94f;
+}
+
+textarea {
+    resize: none;
+    min-height: 60px;
+    field-sizing: content;
+}
+
+.botones {
+    text-align: center;
+    margin-top: 40px;
+}
+
+button {
+    padding: 12px 24px;
+    margin: 0 10px;
+    font-size: 16px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    background-color: #00a94f;
+    color: white;
+}
+
+button:hover {
+    background-color: #ffed00;
+    color: #333;
+}
+
+button.secondary {
+    background-color: #00aeef;
+}
+
+button.danger {
+    background-color: #f58220;
+}
+
+.hidden {
+    display: none;
+}
+
+.error {
+    color: red;
+    margin-top: 15px;
+}
+
+.form-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 40px;
+    gap: 30px;
+}
+
+.form-logo {
+    height: 90px;
+}
+
+.footer-credito {
+    text-align: center;
+    margin-top: 60px;
+    font-size: 13px;
+    color: #c9c8c8;
+    font-style: italic;
+}
+
+
+
+
+/* Modal de contraseña */
+.modal-hidden {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+    text-align: center;
+    max-width: 400px;
+    width: 90%;
+}
+
+.modal-content h3 {
+    color: #00a94f;
+    margin-bottom: 20px;
+}
+
+.modal-content input[type="password"] {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 20px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 16px;
+}
+
+.modal-buttons {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+}
+
+.modal-buttons button {
+    padding: 10px 20px;
+    flex: 1;
+}
+
+.textarea-like {
+    width: 100%;
+    min-height: 80px;           /* Altura inicial como textarea */
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 16px;
+    resize: vertical;           /* Permite redimensionar verticalmente */
+    box-sizing: border-box;
+    line-height: 1.4;
+}
