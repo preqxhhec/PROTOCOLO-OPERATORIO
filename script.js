@@ -228,7 +228,7 @@ function login() {
     const user = document.getElementById('usuario').value.trim();
     const pass = document.getElementById('password').value;
 
-    if (user === "admin" && pass === "1234") {
+    if (user === "admin" && pass === "Administrador1234") {
         document.getElementById('login').classList.add('hidden');
         document.getElementById('formulario').classList.remove('hidden');
         cargarFechaHora();
@@ -826,4 +826,5 @@ function actualizarBotones() {
     } else {
         btnGuardar.textContent = 'GUARDAR / IMPRIMIR';
     }
+
 }
