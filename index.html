@@ -30,24 +30,20 @@
             <h1>PROTOCOLO OPERATORIO</h1>
         </div>
 
-<div class="busqueda-anterior">
-    <h2>Búsqueda de Protocolos Anteriores</h2>
-    <div class="form-grid" style="grid-template-columns: 1fr 1fr auto;">
-        <div>
-            <label>Ingrese RUT para buscar</label>
-            <input type="text" id="buscarRut" placeholder="sin (.) y sin (-) con digito verificador" maxlength="12" onblur="formatearRutBusqueda()">
+        <div class="busqueda-anterior">
+            <h2>Búsqueda de Protocolos Anteriores</h2>
+            <div class="form-grid" style="grid-template-columns: 1fr 1fr auto;">
+                <div>
+                    <label>Ingrese RUT para buscar</label>
+                    <input type="text" id="buscarRut" placeholder="sin (.) y sin (-) con digito verificador" maxlength="12" onblur="formatearRutBusqueda()">
+                </div>
+                <div></div>
+                <div style="align-self: end;">
+                    <button id="btnBuscar" class="secondary">BUSCAR</button>
+                </div>
+            </div>
+            <div id="resultadosBusqueda" style="margin-top: 20px;"></div>
         </div>
-        <div></div>
-        <div style="align-self: end;">
-            <button id="btnBuscar" class="secondary">BUSCAR</button>
-        </div>
-    </div>
-    <div id="resultadosBusqueda" style="margin-top: 20px;"></div>
-</div>
-
-
-
-
 
         <h2>1. Datos Generales del Paciente</h2>
         <div class="form-grid paciente-lineal">
@@ -76,37 +72,31 @@
         <h2>Intervenciones</h2>
         <div class="full-width">
             <label>Intervención Principal</label>
-            <input list="intervenciones" id="intervencion1">
+            <input list="intervenciones1" id="intervencion1" autocomplete="off">
         </div>
         <div class="full-width">
             <label>2da Intervención</label>
-            <input list="intervenciones" id="intervencion2">
+            <input list="intervenciones2" id="intervencion2" autocomplete="off">
         </div>
         <div class="full-width">
             <label>3ra Intervención</label>
-            <input list="intervenciones" id="intervencion3">
+            <input list="intervenciones3" id="intervencion3" autocomplete="off">
         </div>
         <div class="full-width">
             <label>4ta Intervención</label>
-            <input list="intervenciones" id="intervencion4">
+            <input list="intervenciones4" id="intervencion4" autocomplete="off">
         </div>
 
-
-
-
-       <div class="form-grid">
-    <div>
-        <label>Diagnóstico Preoperatorio</label>
-        <input type="text" id="diagPre" list="diagnosticos" class="textarea-like" placeholder="Escribe o selecciona un diagnóstico...">
-    </div>
-    <div>
-        <label>Diagnóstico Postoperatorio</label>
-        <input type="text" id="diagPost" list="diagnosticos" class="textarea-like" placeholder="Escribe o selecciona un diagnóstico...">
-    </div>
-</div>
-
-
-
+        <div class="form-grid">
+            <div>
+                <label>Diagnóstico Preoperatorio</label>
+                <input type="text" id="diagPre" list="diagnosticos" autocomplete="off" class="textarea-like" placeholder="Escribe o selecciona un diagnóstico...">
+            </div>
+            <div>
+                <label>Diagnóstico Postoperatorio</label>
+                <input type="text" id="diagPost" list="diagnosticos" autocomplete="off" class="textarea-like" placeholder="Escribe o selecciona un diagnóstico...">
+            </div>
+        </div>
 
         <h2>2. Datos del Equipo Quirúrgico</h2>
         <div class="full-width">
@@ -117,42 +107,34 @@
         </div>
 
         <div class="form-grid">
-            <div><label>1er Cirujano</label><input list="cirujanosFiltrados" id="cirujano1"></div>
-            <div><label>2do Cirujano</label><input list="cirujanosFiltrados" id="cirujano2"></div>
-            <div><label>3er Cirujano</label><input list="cirujanosFiltrados" id="cirujano3"></div>
-            <div><label>4to Cirujano</label><input list="cirujanosFiltrados" id="cirujano4"></div>
-            <div><label>Anestesiólogo</label><input list="anestesiologos" id="anestesiologo"></div>
-            <div><label>Auxiliar de Anestesia</label><input list="auxiliares" id="auxAnestesia"></div>
-            <div><label>Enfermera</label><input list="enfermeras" id="enfermera"></div>
-            <div><label>Arsenalera</label><input list="arsenaleras" id="arsenalera"></div>
-            <div><label>Pabellonera</label><input list="pabelloneras" id="pabellonera"></div>
+            <div><label>1er Cirujano</label><input list="cirujanosFiltrados1" id="cirujano1" autocomplete="off" class="no-normalizar" ></div>
+            <div><label>2do Cirujano</label><input list="cirujanosTodos" id="cirujano2" autocomplete="off" class="no-normalizar" ></div>
+            <div><label>3er Cirujano</label><input list="cirujanosTodos" id="cirujano3" autocomplete="off" class="no-normalizar" ></div>
+            <div><label>4to Cirujano</label><input list="cirujanosTodos" id="cirujano4" autocomplete="off" class="no-normalizar" ></div>
+            <div><label>Anestesiólogo</label><input list="anestesiologos" id="anestesiologo" autocomplete="off" ></div>
+            <div><label>Auxiliar de Anestesia</label><input list="auxiliares" id="auxAnestesia" autocomplete="off" ></div>
+            <div><label>Enfermera</label><input list="enfermeras" id="enfermera" autocomplete="off" ></div>
+            <div><label>Arsenalera</label><input list="arsenaleras" id="arsenalera" autocomplete="off" ></div>
+            <div><label>Pabellonera</label><input list="pabelloneras" id="pabellonera" autocomplete="off" ></div>
         </div>
 
         <h2>3. Especificaciones</h2>
         <div class="form-grid">
-            <div><label>Tipo de Anestesia</label><input list="tiposAnestesia" id="tipoAnestesia"></div>
-            <div><label>Modalidad</label><input list="modalidades" id="modalidad"></div>
+            <div><label>Tipo de Anestesia</label><input list="tiposAnestesia" id="tipoAnestesia" autocomplete="off"></div>
+            <div><label>Modalidad</label><input list="modalidades" id="modalidad" autocomplete="off"></div>
             <div><label>N° Pabellón</label><select id="pabellon"><option value="">Seleccionar</option><option value="1">1</option><option value="2">2</option><option value="SALA DE PARTO">SALA DE PARTO</option></select></div>
             <div><label>Hora de Inicio (24h)</label><input type="time" id="horaInicio"></div>
             <div><label>Hora de Término (24h)</label><input type="time" id="horaTermino"></div>
             <div><label>Biopsia</label><select id="biopsia"><option value="NO">NO</option><option value="SI">SI</option></select></div>
             <div><label>Cultivo</label><select id="cultivo"><option value="NO">NO</option><option value="SI">SI</option></select></div>
 
-        
-
-
             <div><label>Destino</label><select id="destino">
                 <option value="CMA">CMA</option>
                 <option value="HOSPITALIZACION">HOSPITALIZACION</option>
                 <option value="UTI">UTI</option>
                 <option value="URGENCIA">URGENCIA</option>
-             
             </select></div>
-         
-</div>
-
-
-     
+        </div>
 
         <h2>4. Descripción de la Intervención</h2>
         <textarea id="descripcion" placeholder="Describa detalladamente la intervención realizada..."></textarea>
@@ -161,8 +143,6 @@
             <button id="btnGuardarImprimir">GUARDAR / IMPRIMIR</button>
             <button class="secondary" id="btnEditar">EDITAR</button>
             <button class="danger" id="btnEliminar">ELIMINAR REGISTRO</button>
-            
-            
         </div>
 
         <div class="footer-credito">
@@ -170,8 +150,12 @@
         </div>
     </div>
 
-    <datalist id="intervenciones"></datalist>
-    <datalist id="cirujanosFiltrados"></datalist>
+    <datalist id="intervenciones1"></datalist>
+    <datalist id="intervenciones2"></datalist>
+    <datalist id="intervenciones3"></datalist>
+    <datalist id="intervenciones4"></datalist>
+    <datalist id="cirujanosFiltrados1"></datalist>
+    <datalist id="cirujanosTodos"></datalist>
     <datalist id="anestesiologos"></datalist>
     <datalist id="auxiliares"></datalist>
     <datalist id="enfermeras"></datalist>
@@ -183,21 +167,18 @@
 
     <script src="script.js"></script>
 
-<!-- Modal de contraseña oculta -->
-<div id="modalPassword" class="modal-hidden">
-    <div class="modal-content">
-        <h3>Ingrese contraseña para continuar</h3>
-        <input type="password" id="inputPasswordModal" placeholder="Contraseña" autocomplete="off">
-        <div class="modal-buttons">
-            <button id="btnAceptarPassword" class="secondary">Aceptar</button>
-            <button id="btnCancelarPassword">Cancelar</button>
+    <!-- Modal de contraseña oculta -->
+    <div id="modalPassword" class="modal-hidden">
+        <div class="modal-content">
+            <h3>Ingrese contraseña para continuar</h3>
+            <input type="password" id="inputPasswordModal" placeholder="Contraseña" autocomplete="off">
+            <div class="modal-buttons">
+                <button id="btnAceptarPassword" class="secondary">Aceptar</button>
+                <button id="btnCancelarPassword">Cancelar</button>
+            </div>
+            <p id="errorPasswordModal" class="error"></p>
         </div>
-        <p id="errorPasswordModal" class="error"></p>
     </div>
-</div>
-
-
-
 
 </body>
 </html>
