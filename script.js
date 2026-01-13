@@ -4,6 +4,9 @@ let modoEdicion = false;
 let currentRowId = null;
 let accionPendientePassword = null;
 
+// Inicialización global crítica para evitar undefined
+window.datalistsNormalizados = {};
+
 // ==================== VALIDACIÓN DE CAMPOS OBLIGATORIOS ====================
 const camposObligatorios = [
     'nombrePaciente',
@@ -11,16 +14,16 @@ const camposObligatorios = [
     'intervencion1',
     'diagPre',
     'diagPost',
-    'especialidadSelect',   // select
+    'especialidadSelect',
     'cirujano1',
     'anestesiologo',
     'tipoAnestesia',
     'modalidad',
-    'pabellon',             // select
+    'pabellon',
     'horaInicio',
     'horaTermino',
     'descripcion',
-    'destino'               // Campo obligatorio añadido
+    'destino'
 ];
 
 function validarCamposObligatorios() {
@@ -32,17 +35,14 @@ function validarCamposObligatorios() {
 
         let valor = campo.value ? campo.value.trim() : '';
 
-        // Para selects: verifica que no sea la opción vacía inicial
         if ((campo.tagName === 'SELECT' && (campo.selectedIndex === 0 && campo.options[0].value === '')) || valor === '') {
             const label = document.querySelector(`label[for="${id}"]`);
             const nombreCampo = label ? label.textContent.trim() : id;
             faltantes.push(nombreCampo);
 
-            // Resaltar en rojo
             campo.style.borderColor = '#e74c3c';
             campo.style.backgroundColor = '#ffeaea';
         } else {
-            // Quitar resaltado
             campo.style.borderColor = '';
             campo.style.backgroundColor = '';
         }
@@ -55,9 +55,235 @@ function validarCamposObligatorios() {
     return true;
 }
 
-// Inicialización
+// ==================== FUNCIONES AUXILIARES ====================
+function quitarAcentos(texto) {
+    if (typeof texto !== 'string' || !texto) return '';
+    return texto.normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/\s+/g, ' ')
+        .trim()
+        .toLowerCase();
+}
+
+// ==================== CARGAR LISTAS ====================
+async function cargarListas() {
+    try {
+        const url = 'https://script.google.com/macros/s/AKfycbw8RT55rxV6ArtbumqzU9hGimyOddR3dR7QjbNERpUkCRxZAChBC2V0WGRGM_7DH46-8w/exec';
+        const response = await fetch(url + '?accion=listas');
+        if (!response.ok) throw new Error('Error en la respuesta del servidor');
+        const listas = await response.json();
+
+        // 1. DATALISTS ESTÁTICOS (sin filtrado dinámico al escribir)
+        function cargarDatalistEstatico(id, array) {
+            const dl = document.getElementById(id);
+            if (!dl) return;
+            dl.innerHTML = '';
+            (array || []).filter(item => item && item.toString().trim())
+                .forEach(item => {
+                    const opt = document.createElement('option');
+                    opt.value = item.toString().trim();
+                    dl.appendChild(opt);
+                });
+        }
+
+        cargarDatalistEstatico('anestesiologos', listas.anestesiologos || []);
+        cargarDatalistEstatico('auxiliares', listas.auxiliaresdeanestesia || listas.auxanestesia || []);
+        cargarDatalistEstatico('enfermeras', listas.enfermeras || []);
+        cargarDatalistEstatico('arsenaleras', listas.arsenaleras || []);
+        cargarDatalistEstatico('pabelloneras', listas.pabelloneras || []);
+        cargarDatalistEstatico('tiposAnestesia', listas.tiposanestesia || listas.tipodeanestesia || []);
+        cargarDatalistEstatico('modalidades', listas.modalidades || []);
+
+        // 2. Carga los 4 datalists INDEPENDIENTES para intervenciones (¡esto es lo que resuelve tu problema principal!)
+        const intervencionesData = listas.intervenciones || [];
+        ['intervenciones1', 'intervenciones2', 'intervenciones3', 'intervenciones4'].forEach(id => {
+            const dl = document.getElementById(id);
+            if (!dl) {
+                console.warn(`No se encontró datalist con id: ${id}. Verifica tu HTML.`);
+                return;
+            }
+            dl.innerHTML = '';
+
+            const itemsNormalizados = intervencionesData
+                .filter(item => item && item.toString().trim() !== '')
+                .map(item => {
+                    const original = item.toString().trim();
+                    const normalizado = quitarAcentos(original);
+                    return { original, normalizado };
+                });
+
+            window.datalistsNormalizados[id] = itemsNormalizados;
+
+            itemsNormalizados.forEach(item => {
+                const opt = document.createElement('option');
+                opt.value = item.normalizado;      // sin acentos para matching del navegador
+                opt.textContent = item.original;   // muestra con acentos
+                dl.appendChild(opt);
+            });
+        });
+
+        // 3. DATALISTS DINÁMICOS (solo diagnósticos)
+        function cargarDatalistDinamico(id, array) {
+            const dl = document.getElementById(id);
+            if (!dl) return;
+            dl.innerHTML = '';
+
+            const itemsNormalizados = (array || [])
+                .filter(item => item && item.toString().trim() !== '')
+                .map(item => {
+                    const original = item.toString().trim();
+                    const normalizado = quitarAcentos(original);
+                    return { original, normalizado };
+                });
+
+            window.datalistsNormalizados[id] = itemsNormalizados;
+
+            itemsNormalizados.forEach(item => {
+                const opt = document.createElement('option');
+                opt.value = item.normalizado;
+                opt.textContent = item.original;
+                dl.appendChild(opt);
+            });
+        }
+
+        cargarDatalistDinamico('diagnosticos', listas.diagnosticos || []);
+
+        // 4. Especialidades (select)
+        const selectEsp = document.getElementById('especialidadSelect');
+        if (selectEsp) {
+            selectEsp.innerHTML = '<option value="">Seleccionar especialidad</option>';
+            (listas.especialidades || []).forEach(esp => {
+                const trimmed = esp?.trim();
+                if (trimmed) {
+                    const opt = document.createElement('option');
+                    opt.value = trimmed;
+                    opt.textContent = trimmed;
+                    selectEsp.appendChild(opt);
+                }
+            });
+        }
+
+        // 5. Cirujanos
+        const cirujanosArray = [];
+        const nombres = listas.cirujanos || [];
+        const especialidadesCir = listas.especialidadcirujano || [];
+
+        for (let i = 0; i < Math.max(nombres.length, especialidadesCir.length); i++) {
+            const nombre = (nombres[i] || '').toString().trim();
+            const esp = (especialidadesCir[i] || '').toString().trim();
+            if (nombre && esp) {
+                cirujanosArray.push({ nombre, especialidad: esp });
+            }
+        }
+
+        window.cirujanos = cirujanosArray;
+        console.log("Cirujanos cargados:", window.cirujanos.length);
+
+        cargarTodosCirujanos();
+        filtrarCirujanos();
+
+        console.log("Carga de listas completada correctamente");
+
+    } catch (error) {
+        console.error("Error al cargar listas:", error);
+        alert("No se pudieron cargar las listas desde Google Sheets. Verifique la conexión y el script.");
+    }
+}
+
+function cargarTodosCirujanos() {
+    const dl = document.getElementById('cirujanosTodos');
+    if (!dl) return;
+    dl.innerHTML = '';
+    window.cirujanos.forEach(c => {
+        const nombre = c.nombre.trim();
+        if (nombre) {
+            const opt = document.createElement('option');
+            opt.value = nombre;
+            dl.appendChild(opt);
+        }
+    });
+}
+
+function filtrarCirujanos() {
+    const especialidad = document.getElementById('especialidadSelect')?.value?.trim();
+    const dl = document.getElementById('cirujanosFiltrados1');
+    if (!dl) return;
+
+    dl.innerHTML = '';
+
+    if (!especialidad) {
+        const opt = document.createElement('option');
+        opt.value = "";
+        opt.textContent = "Seleccione especialidad primero";
+        dl.appendChild(opt);
+        return;
+    }
+
+    const filtrados = window.cirujanos.filter(c => c.especialidad.trim() === especialidad);
+
+    if (filtrados.length === 0) {
+        const opt = document.createElement('option');
+        opt.value = "";
+        opt.textContent = "No hay cirujanos para esta especialidad";
+        dl.appendChild(opt);
+    } else {
+        filtrados.forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c.nombre.trim();
+            dl.appendChild(opt);
+        });
+    }
+}
+
+// ==================== FILTRO DINÁMICO INSENSIBLE A ACENTOS ====================
 document.addEventListener('DOMContentLoaded', function () {
     cargarListas();
+
+    const camposConFiltro = [
+        'intervencion1', 'intervencion2', 'intervencion3', 'intervencion4',
+        'diagPre', 'diagPost'
+    ];
+
+    camposConFiltro.forEach(id => {
+        const input = document.getElementById(id);
+        if (!input) return;
+
+        input.addEventListener('input', function () {
+            const listId = this.getAttribute('list');
+            if (!listId || !window.datalistsNormalizados[listId]) return;
+
+            const textoEscrito = this.value.trim();
+            const filtro = quitarAcentos(textoEscrito.toLowerCase());
+
+            const datalist = document.getElementById(listId);
+            datalist.innerHTML = '';
+
+            if (!textoEscrito) {
+                window.datalistsNormalizados[listId].forEach(item => {
+                    const opt = document.createElement('option');
+                    opt.value = item.normalizado;
+                    opt.textContent = item.original;
+                    datalist.appendChild(opt);
+                });
+            } else {
+                window.datalistsNormalizados[listId].forEach(item => {
+                    if (item.normalizado.includes(filtro)) {
+                        const opt = document.createElement('option');
+                        opt.value = item.normalizado;       // matching sin acentos
+                        opt.textContent = item.original;    // muestra con acentos
+                        datalist.appendChild(opt);
+                    }
+                });
+            }
+
+            // Forzar refresco (crucial para que el navegador actualice la lista)
+            datalist.style.display = 'none';
+            datalist.offsetHeight;
+            datalist.style.display = '';
+        });
+    });
+
+    // Eventos de botones
     document.getElementById('btnLogin').onclick = login;
     document.getElementById('btnGuardarImprimir').onclick = guardarImprimir;
     document.getElementById('btnEliminar').onclick = eliminarRegistro;
@@ -69,7 +295,6 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('buscarRut').addEventListener('blur', formatearRutBusqueda);
     document.getElementById('buscarRut').addEventListener('input', soloNumerosYK);
 
-    // Botón REIMPRIMIR
     const btnReimprimir = document.createElement('button');
     btnReimprimir.id = 'btnReimprimir';
     btnReimprimir.textContent = 'REIMPRIMIR';
@@ -81,17 +306,37 @@ document.addEventListener('DOMContentLoaded', function () {
     inicializarModalPassword();
 });
 
-// ==================== MODAL DE CONTRASEÑA ====================
+// ==================== NORMALIZAR AL SELECCIONAR ====================
+document.querySelectorAll('input[list]').forEach(input => {
+    input.addEventListener('change', function () {
+        const listId = this.getAttribute('list');
+        const datalist = document.getElementById(listId);
+        if (!datalist) return;
+
+        const opciones = Array.from(datalist.options);
+        let seleccionada = opciones.find(opt => opt.textContent === this.value);
+
+        if (!seleccionada) {
+            seleccionada = opciones.find(opt => quitarAcentos(opt.textContent) === quitarAcentos(this.value));
+        }
+
+        if (seleccionada) {
+            this.value = seleccionada.textContent; // siempre con acentos
+        }
+    });
+});
+
+// ==================== MODAL PASSWORD ====================
 function inicializarModalPassword() {
     const modal = document.getElementById('modalPassword');
     if (!modal) return;
 
-    document.getElementById('btnCancelarPassword').onclick = function() {
+    document.getElementById('btnCancelarPassword').onclick = () => {
         modal.style.display = 'none';
         accionPendientePassword = null;
     };
 
-    document.getElementById('btnAceptarPassword').onclick = function() {
+    document.getElementById('btnAceptarPassword').onclick = () => {
         const pass = document.getElementById('inputPasswordModal').value.trim();
         if (pass === "Administrador1234") {
             modal.style.display = 'none';
@@ -104,10 +349,8 @@ function inicializarModalPassword() {
         document.getElementById('inputPasswordModal').value = '';
     };
 
-    document.getElementById('inputPasswordModal').addEventListener('keyup', function(e) {
-        if (e.key === 'Enter') {
-            document.getElementById('btnAceptarPassword').click();
-        }
+    document.getElementById('inputPasswordModal').addEventListener('keyup', e => {
+        if (e.key === 'Enter') document.getElementById('btnAceptarPassword').click();
     });
 }
 
@@ -117,110 +360,6 @@ function mostrarModalPassword(callback) {
     document.getElementById('inputPasswordModal').value = '';
     document.getElementById('errorPasswordModal').textContent = '';
     document.getElementById('inputPasswordModal').focus();
-}
-
-// ==================== CARGAR LISTAS DESDE HOJA MAI ====================
-async function cargarListas() {
-    try {
-        const url = 'https://script.google.com/macros/s/AKfycbw8RT55rxV6ArtbumqzU9hGimyOddR3dR7QjbNERpUkCRxZAChBC2V0WGRGM_7DH46-8w/exec';
-        const response = await fetch(url + '?accion=listas');
-        if (!response.ok) throw new Error('Error en la respuesta del servidor');
-        const listas = await response.json();
-
-        // Datalists normales
-        cargarDatalist('intervenciones', listas.intervenciones || []);
-        cargarDatalist('anestesiologos', listas.anestesiologos || []);
-        cargarDatalist('auxiliares', listas.auxiliaresdeanestesia || listas.auxanestesia || []);
-        cargarDatalist('enfermeras', listas.enfermeras || []);
-        cargarDatalist('arsenaleras', listas.arsenaleras || []);
-        cargarDatalist('pabelloneras', listas.pabelloneras || []);
-        cargarDatalist('tiposAnestesia', listas.tiposanestesia || listas.tipodeanestesia || []);
-        cargarDatalist('modalidades', listas.modalidades || []);
-        cargarDatalist('diagnosticos', listas.diagnosticos || []);
-        
-
-        // Especialidades desde columna I
-        const selectEsp = document.getElementById('especialidadSelect');
-        selectEsp.innerHTML = '<option value="">Seleccionar especialidad</option>';
-        (listas.especialidades || []).forEach(esp => {
-            const opt = document.createElement('option');
-            opt.value = esp.trim();
-            opt.textContent = esp.trim();
-            selectEsp.appendChild(opt);
-        });
-
-        // Cirujanos: columna J = nombre, columna K = especialidad del cirujano
-        const cirujanosArray = [];
-        const nombres = listas.cirujanos || [];
-        const especialidadesCir = listas.especialidadcirujano || [];
-
-        for (let i = 0; i < Math.max(nombres.length, especialidadesCir.length); i++) {
-            const nombre = (nombres[i] || '').toString().trim();
-            const esp = (especialidadesCir[i] || '').toString().trim();
-            if (nombre && esp) {
-                cirujanosArray.push({ nombre: nombre, especialidad: esp });
-            }
-        }
-
-        window.cirujanos = cirujanosArray;
-        console.log("Cirujanos cargados desde MAI:", window.cirujanos);
-
-        filtrarCirujanos();
-
-    } catch (error) {
-        console.error("Error al cargar listas:", error);
-        alert("No se pudieron cargar las listas desde Google Sheets. Verifique la hoja 'MAI', los encabezados y la conexión.");
-    }
-}
-
-function cargarDatalist(id, array) {
-    const dl = document.getElementById(id);
-    dl.innerHTML = '';
-    array.forEach(item => {
-        if (item && item.toString().trim() !== '') {
-            const opt = document.createElement('option');
-            opt.value = item.toString().trim();
-            dl.appendChild(opt);
-        }
-    });
-}
-
-// ==================== FILTRAR CIRUJANOS ====================
-function filtrarCirujanos() {
-    const especialidad = document.getElementById('especialidadSelect').value.trim();
-    const datalist = document.getElementById('cirujanosFiltrados');
-    datalist.innerHTML = '';
-
-    if (!especialidad) {
-        const opt = document.createElement('option');
-        opt.value = "";
-        opt.textContent = "Seleccione especialidad primero";
-        datalist.appendChild(opt);
-        return;
-    }
-
-    if (!window.cirujanos || window.cirujanos.length === 0) {
-        const opt = document.createElement('option');
-        opt.value = "";
-        opt.textContent = "No hay cirujanos registrados";
-        datalist.appendChild(opt);
-        return;
-    }
-
-    const filtrados = window.cirujanos.filter(c => c.especialidad.trim() === especialidad);
-
-    if (filtrados.length === 0) {
-        const opt = document.createElement('option');
-        opt.value = "";
-        opt.textContent = "No hay cirujanos para esta especialidad";
-        datalist.appendChild(opt);
-    } else {
-        filtrados.forEach(c => {
-            const opt = document.createElement('option');
-            opt.value = c.nombre;
-            datalist.appendChild(opt);
-        });
-    }
 }
 
 // ==================== LOGIN ====================
@@ -309,26 +448,25 @@ function editarRegistro() {
 
 async function eliminarRegistroEnSheets(rowId) {
     try {
-        const response = await fetch('https://script.google.com/macros/s/AKfycbw8RT55rxV6ArtbumqzU9hGimyOddR3dR7QjbNERpUkCRxZAChBC2V0WGRGM_7DH46-8w/exec', {
+        await fetch('https://script.google.com/macros/s/AKfycbw8RT55rxV6ArtbumqzU9hGimyOddR3dR7QjbNERpUkCRxZAChBC2V0WGRGM_7DH46-8w/exec', {
             method: 'POST',
             mode: 'no-cors',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ accion: 'eliminar', rowId: rowId })
+            body: JSON.stringify({ accion: 'eliminar', rowId })
         });
-        alert("Registro eliminado exitosamente.");
-        limpiarFormulario();
+
+        // Llamamos al mensaje elegante y limpieza
+        postEliminarRegistro();
+
     } catch (error) {
-        alert("Error al eliminar el registro.");
+        alert("Error al eliminar el registro: " + error.message);
         console.error(error);
     }
 }
 
 // ==================== GUARDAR E IMPRIMIR ====================
 function guardarImprimir() {
-    // VALIDACIÓN DE CAMPOS OBLIGATORIOS
-    if (!validarCamposObligatorios()) {
-        return;
-    }
+    if (!validarCamposObligatorios()) return;
 
     if (modoReimpresion && !modoEdicion) {
         alert("Este protocolo ya fue guardado previamente. Use REIMPRIMIR si solo desea imprimir.");
@@ -337,18 +475,14 @@ function guardarImprimir() {
 
     const datos = obtenerDatosActuales();
     datos.accion = modoEdicion ? 'editar' : 'insertar';
-    if (modoEdicion && currentRowId) {
-        datos.rowId = currentRowId;
-    }
+    if (modoEdicion && currentRowId) datos.rowId = currentRowId;
 
     const printWindow = window.open('', '_blank', 'width=950,height=850,scrollbars=yes,resizable=yes');
-
     if (!printWindow) {
         alert("Por favor, permite las ventanas emergentes para este sitio.");
         return;
     }
 
-    // Guardamos los datos completos (con accion y rowId) para que el popup los use
     window.datosParaGuardar = datos;
 
     const htmlContent = `
@@ -457,18 +591,33 @@ function guardarImprimir() {
 }
 
 function postGuardarImprimir() {
-    if (modoEdicion) {
-        alert("¡Cambios guardados exitosamente en Google Sheets!");
+    setTimeout(() => {
+        // Mensaje en pantalla (mejor que alert)
+        const mensaje = document.createElement('div');
+        mensaje.textContent = "¡Cambios guardados exitosamente!";
+        mensaje.style.position = 'fixed';
+        mensaje.style.top = '20px';
+        mensaje.style.left = '50%';
+        mensaje.style.transform = 'translateX(-50%)';
+        mensaje.style.background = '#00a94f';
+        mensaje.style.color = 'white';
+        mensaje.style.padding = '15px 30px';
+        mensaje.style.borderRadius = '8px';
+        mensaje.style.zIndex = '9999';
+        mensaje.style.boxShadow = '0 4px 12px rgba(0,0,0,0.3)';
+        document.body.appendChild(mensaje);
+
+        // Desaparece después de 4 segundos
+        setTimeout(() => mensaje.remove(), 4000);
+
         modoEdicion = false;
         modoReimpresion = true;
+        limpiarFormulario();
         actualizarBotones();
-    } else {
-        setTimeout(() => {
-            limpiarFormulario();
-        }, 1000);
-    }
+    }, 500);
 }
 
+// ==================== REIMPRIMIR ====================
 function reimprimir() {
     const datos = obtenerDatosActuales();
 
@@ -479,7 +628,7 @@ function reimprimir() {
         return;
     }
 
-    const htmlContent = `
+    const htmlContentReimprimir = `
     <!DOCTYPE html>
     <html lang="es">
     <head>
@@ -523,21 +672,14 @@ function reimprimir() {
         </table>
         <h3>4. Equipo Quirúrgico y Especificaciones</h3>
         <table class="tabla-5col">
-            <tr>
-                <th>Especialidad</th><th>1er Cirujano</th><th>2do Cirujano</th><th>Anestesiólogo</th><th>Tipo Anestesia</th>
-            </tr>
+            <tr><th>Especialidad</th><th>1er Cirujano</th><th>2do Cirujano</th><th>Anestesiólogo</th><th>Tipo Anestesia</th></tr>
             <tr><td>${datos.especialidad}</td><td>${datos.cirujano1}</td><td>${datos.cirujano2}</td><td>${datos.anestesiologo}</td><td>${datos.tipoAnestesia}</td></tr>
-            <tr>
-                <th>3er Cirujano</th><th>4to Cirujano</th><th>Aux. Anestesia</th><th>Enfermera</th><th>Modalidad</th>
-            </tr>
+            <tr><th>3er Cirujano</th><th>4to Cirujano</th><th>Aux. Anestesia</th><th>Enfermera</th><th>Modalidad</th></tr>
             <tr><td>${datos.cirujano3}</td><td>${datos.cirujano4}</td><td>${datos.auxAnestesia}</td><td>${datos.enfermera}</td><td>${datos.modalidad}</td></tr>
-            <tr>
-                <th>Arsenalera</th><th>Pabellonera</th><th>N° Pabellón</th><th>Hora Inicio</th><th>Hora Término</th>
-            </tr>
+            <tr><th>Arsenalera</th><th>Pabellonera</th><th>N° Pabellón</th><th>Hora Inicio</th><th>Hora Término</th></tr>
             <tr><td>${datos.arsenalera}</td><td>${datos.pabellonera}</td><td>${datos.pabellon}</td><td>${datos.horaInicio}</td><td>${datos.horaTermino}</td></tr>
             <tr><td colspan="2"><strong>Biopsia:</strong> ${datos.biopsia}</td><td colspan="3"><strong>Cultivo:</strong> ${datos.cultivo}</td></tr>
             <tr><td colspan="5"><strong>Destino del paciente:</strong> ${datos.destino || 'No especificado'}</td></tr>
-
         </table>
         <h3>5. Descripción de la Intervención</h3>
         <div class="descripcion">${datos.descripcion.replace(/\n/g, '<br>')}</div>
@@ -556,7 +698,7 @@ function reimprimir() {
     `;
 
     printWindow.document.open();
-    printWindow.document.write(htmlContent);
+    printWindow.document.write(htmlContentReimprimir);
     printWindow.document.close();
     printWindow.focus();
 }
@@ -826,5 +968,90 @@ function actualizarBotones() {
     } else {
         btnGuardar.textContent = 'GUARDAR / IMPRIMIR';
     }
-
 }
+
+
+
+function postEliminarRegistro() {
+    // Mensaje elegante flotante para eliminación
+    const mensaje = document.createElement('div');
+    mensaje.textContent = "¡Registro eliminado exitosamente!";
+    mensaje.style.position = 'fixed';
+    mensaje.style.top = '20px';
+    mensaje.style.left = '50%';
+    mensaje.style.transform = 'translateX(-50%)';
+    mensaje.style.background = '#e74c3c'; // rojo para indicar eliminación
+    mensaje.style.color = 'white';
+    mensaje.style.padding = '15px 30px';
+    mensaje.style.borderRadius = '8px';
+    mensaje.style.zIndex = '9999';
+    mensaje.style.boxShadow = '0 4px 12px rgba(0,0,0,0.3)';
+    mensaje.style.fontWeight = 'bold';
+    document.body.appendChild(mensaje);
+
+    // Desaparece después de 4 segundos
+    setTimeout(() => mensaje.remove(), 4000);
+
+    // Limpiar y salir de modo reimpresión
+    modoReimpresion = false;
+    modoEdicion = false;
+    currentRowId = null;
+    limpiarFormulario();
+    actualizarBotones();
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// ==================== NORMALIZAR AL SELECCIONAR (excluyendo cirujanos) ====================
+/*document.querySelectorAll('input[list]').forEach(input => {
+    input.addEventListener('change', function () {
+        const listId = this.getAttribute('list');
+        const datalist = document.getElementById(listId);
+        if (!datalist) return;
+
+        const opciones = Array.from(datalist.options);
+        // Buscamos la opción cuyo textContent coincida con lo seleccionado
+        const seleccionada = opciones.find(opt => opt.textContent === this.value);
+        if (seleccionada) {
+            this.value = seleccionada.textContent; // ya es con acentos
+        } else {
+            // Si no encuentra por textContent, busca por value normalizado
+            const seleccionadaPorValue = opciones.find(opt => opt.value === quitarAcentos(this.value));
+            if (seleccionadaPorValue) {
+                this.value = seleccionadaPorValue.textContent;
+            }
+        }
+    });
+});*/
