@@ -1055,3 +1055,118 @@ function postEliminarRegistro() {
         }
     });
 });*/
+
+
+
+
+// ==================== DESCRIPCIONES ESTÁTICAS DESDE JSON ====================
+let descripcionesMap = null;
+
+async function cargarDescripcionesEstaticas() {
+    try {
+        const response = await fetch('descripciones.json');
+        if (!response.ok) {
+            throw new Error(`No se pudo cargar descripciones.json - Status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        descripcionesMap = {};
+
+        Object.entries(data).forEach(([intervencionOriginal, descripcion]) => {
+            const key = quitarAcentos(intervencionOriginal)
+                .replace(/\s+/g, ' ')
+                .trim()
+                .toLowerCase();
+            descripcionesMap[key] = descripcion.trim();
+        });
+
+        console.log(`Descripciones estáticas cargadas: ${Object.keys(descripcionesMap).length} intervenciones`);
+    } catch (error) {
+        console.error('Error al cargar el archivo de descripciones:', error);
+        // Puedes mostrar un mensaje sutil al usuario si quieres:
+        // alert('No se pudieron cargar las descripciones predefinidas. Funcionará normalmente pero sin autocompletado de descripción.');
+    }
+}
+
+function aplicarDescripcionDesdeCache() {
+    if (!descripcionesMap) return;
+
+    const input = document.getElementById('intervencion1');
+    if (!input || !input.value.trim()) return;
+
+    const textoIngresado = input.value.trim();
+    const claveNormalizada = quitarAcentos(textoIngresado)
+        .replace(/\s+/g, ' ')
+        .trim()
+        .toLowerCase();
+
+    const descripcionEncontrada = descripcionesMap[claveNormalizada];
+
+    if (descripcionEncontrada) {
+        document.getElementById('descripcion').value = descripcionEncontrada;
+    }
+    // Si prefieres limpiar cuando no hay coincidencia:
+    // else {
+    //     document.getElementById('descripcion').value = '';
+    // }
+}
+
+// Inicialización
+document.addEventListener('DOMContentLoaded', function () {
+    // Cargar las descripciones al inicio
+    cargarDescripcionesEstaticas();
+
+    const intervencion1Input = document.getElementById('intervencion1');
+    if (intervencion1Input) {
+        // Disparar cuando se selecciona del datalist o se completa
+        intervencion1Input.addEventListener('change', aplicarDescripcionDesdeCache);
+        // También al salir del campo (útil si escriben manualmente)
+        intervencion1Input.addEventListener('blur', aplicarDescripcionDesdeCache);
+    }
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// ==================== NORMALIZAR AL SELECCIONAR (excluyendo cirujanos) ====================
+/*document.querySelectorAll('input[list]').forEach(input => {
+    input.addEventListener('change', function () {
+        const listId = this.getAttribute('list');
+        const datalist = document.getElementById(listId);
+        if (!datalist) return;
+
+        const opciones = Array.from(datalist.options);
+        // Buscamos la opción cuyo textContent coincida con lo seleccionado
+        const seleccionada = opciones.find(opt => opt.textContent === this.value);
+        if (seleccionada) {
+            this.value = seleccionada.textContent; // ya es con acentos
+        } else {
+            // Si no encuentra por textContent, busca por value normalizado
+            const seleccionadaPorValue = opciones.find(opt => opt.value === quitarAcentos(this.value));
+            if (seleccionadaPorValue) {
+                this.value = seleccionadaPorValue.textContent;
+            }
+        }
+    });
+});*/
+
