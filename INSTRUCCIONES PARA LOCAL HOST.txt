@@ -1,0 +1,120 @@
+Paso 1: Verificar si tienes Python instalado (en este nuevo computador)
+
+Presiona las teclas Windows + R (juntas).
+Escribe cmd y presiona Enter → se abre una ventana negra (CMD).
+En esa ventana escribe uno por uno y presiona Enter después de cada línea:
+	python --version
+	py --version
+	python3 --version
+
+
+Si dice algo como Python 3.11.4 o Python 3.12.5 → ya tienes Python → pasa al Paso 3.
+Si dice "no se reconoce como comando interno o externo" en los tres → no tienes Python → ve al Paso 2.
+
+
+Paso 2: Instalar Python (solo si no lo tienes – 5 minutos)
+
+Abre tu navegador (Chrome, Edge, etc.).
+Ve a esta página: https://www.python.org/downloads/
+Haz clic en el botón grande amarillo que dice "Download Python 3.12.x" (o la versión más reciente que veas).
+Descarga el archivo .exe (para Windows).
+Abre el instalador que descargaste.
+Muy importante – en la primera pantalla del instalador marca estas dos casillas:
+ Install launcher for all users (recommended)
+Add python.exe to PATH  ← ¡Esta es la clave para que funcione sin problemas!
+
+Haz clic en "Install Now".
+Espera a que termine (1-2 minutos).
+Cierra el instalador y vuelve a abrir CMD (Windows + R → cmd → Enter).
+
+prueba de nuevo el paso 1
+
+Paso 3: Iniciar el servidor local (ya con Python funcionando)
+
+Ve a tu carpeta del proyecto (donde está index.html y descripciones.json).
+Dentro de esa carpeta, mantén presionada la tecla Shift + clic derecho en un espacio vacío → elige "Abrir ventana de PowerShell aquí" o "Abrir en Terminal".
+En la ventana que se abre, pega y presiona Enter:
+
+	python -m http.server 8000
+(Si no funciona, prueba py -m http.server 8000)Deberías ver algo como:
+
+	Serving HTTP on :: port 8000[](http://[::]:8000/) ...
+
+No cierres esa ventana (es el servidor vivo).
+Abre Chrome (o tu navegador) y escribe esta dirección exacta: 
+	
+	http://localhost:8000/index.html
+
+→ Tu página debería abrirse con servidor local.
+→ Ahora el fetch('descripciones.json') debe funcionar porque ya no estás en file://.
+
+
+
+PARA INICIARLO AUTOMATICAMENTE SIN TENER QUE ABRIR EL POWER SHELL CADA VEZ
+
+Paso 1: Confirmar que Python está instalado (ya lo vimos antes)
+En el mensaje anterior ya viste:
+
+	Serving HTTP on :: port 8000[](http://[::]:8000/) ...
+
+Eso confirma que Python sí está instalado y funcionando en este computador. ¡Excelente! No necesitas instalar nada nuevo.
+
+Paso 2: Crear el archivo .bat correctamente (sin extensión .txt oculta)
+
+Ve a tu carpeta del proyecto (donde está index.html y descripciones.json).
+Muestra las extensiones para evitar el error clásico:
+En el Explorador de Archivos → pestaña Vista (arriba).
+Marca "Extensiones de nombre de archivo" (si no está marcada).
+Ahora verás que los archivos .txt terminan en .txt.
+
+Crea el archivo:
+Clic derecho en un espacio vacío → Nuevo → Documento de texto.
+Nómbralo exactamente: iniciar.bat (escribe todo, incluyendo .bat).
+Cuando Windows pregunte "¿Desea cambiar la extensión?" → Sí.
+El icono debe cambiar a uno de engranaje/consola (no de Bloc de Notas). Si sigue siendo Bloc de Notas, borra y repite.
+
+Edita el contenido:
+Doble clic en iniciar.bat → abre en Bloc de Notas.
+Borra todo y pega esto:
+
+	@echo off
+	if not defined MINIMIZED set MINIMIZED=1 && start /min "" "%~dpnx0" && exit
+	title Servidor Local - Protocolo (NO CERRAR)
+	echo Servidor iniciado (minimizado)...
+	start http://localhost:8000/index.html
+	python -m http.server 8000
+	pause
+
+Método recomendado: VBS + PowerShell oculto (oculta 100%)
+
+Crea el archivo VBS oculto (este será el que ejecutes con doble clic):
+Abre Bloc de Notas.
+Pega exactamente esto:
+
+	Set objShell = CreateObject("WScript.Shell")
+	objShell.Run "powershell -WindowStyle Hidden -Command ""& {python -m http.server 8000}""", 0, False
+	objShell.Run "cmd /c start http://localhost:8000/index.html", 0, False
+	Set objShell = Nothing
+
+Guarda como Todos los archivos → nombre: lanzar_oculto.vbs
+
+Si aún ves ventana (muy raro)
+Si por alguna política estricta del PC sigue visible:
+
+Prueba esta variante en el VBS (más agresiva):
+
+	CreateObject("Wscript.Shell").Run "powershell -WindowStyle Hidden -NoProfile -ExecutionPolicy Bypass -Command ""Start-Process 'python' -ArgumentList '-m http.server 8000' -WindowStyle Hidden""", 0
+	CreateObject("Wscript.Shell").Run "start http://localhost:8000/index.html", 0
+
+
+
+
+Acceso directo bonito en el escritorio
+
+Clic derecho en lanzar_oculto.vbs → Enviar a → Escritorio (crear acceso directo).
+Clic derecho en el acceso directo → Propiedades → pestaña Acceso directo → Cambiar icono.
+Elige un icono que te guste (por ejemplo, el de Chrome o uno de médico que descargues).
+Cambia el nombre a "Abrir Protocolo" o lo que quieras.
+
+Ahora tienes un icono en el escritorio: doble clic → todo invisible y funcionando.
+
