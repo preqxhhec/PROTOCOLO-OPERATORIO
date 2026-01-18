@@ -94,7 +94,7 @@ async function cargarListas() {
         cargarDatalistEstatico('tiposAnestesia', listas.tiposanestesia || listas.tipodeanestesia || []);
         cargarDatalistEstatico('modalidades', listas.modalidades || []);
 
-        // 2. Carga los 4 datalists INDEPENDIENTES para intervenciones (¡esto es lo que resuelve tu problema principal!)
+        // 2. Carga los 4 datalists INDEPENDIENTES para intervenciones
         const intervencionesData = listas.intervenciones || [];
         ['intervenciones1', 'intervenciones2', 'intervenciones3', 'intervenciones4'].forEach(id => {
             const dl = document.getElementById(id);
@@ -367,7 +367,7 @@ function login() {
     const user = document.getElementById('usuario').value.trim();
     const pass = document.getElementById('password').value;
 
-    if (user === "admin" && pass === "Administrador1234") {
+    if (user === "admin" && pass === "1234") {
         document.getElementById('login').classList.add('hidden');
         document.getElementById('formulario').classList.remove('hidden');
         cargarFechaHora();
@@ -381,15 +381,63 @@ function login() {
 }
 
 // ==================== FECHA Y HORA ====================
+let busquedaCargada = false;
+
 function cargarFechaHora() {
+    if (busquedaCargada) return;
+
     const ahora = new Date();
-    const dia = String(ahora.getDate()).padStart(2, '0');
-    const mes = String(ahora.getMonth() + 1).padStart(2, '0');
-    const año = ahora.getFullYear();
-    const hora = String(ahora.getHours()).padStart(2, '0');
-    const min = String(ahora.getMinutes()).padStart(2, '0');
-    document.getElementById('fechaHora').value = `${dia}/${mes}/${año} ${hora}:${min}`;
+    const dia     = String(ahora.getDate()).padStart(2, '0');
+    const mes     = String(ahora.getMonth() + 1).padStart(2, '0');
+    const año     = ahora.getFullYear();
+    const hora    = String(ahora.getHours()).padStart(2, '0');
+    const minutos = String(ahora.getMinutes()).padStart(2, '0');
+    const segundos = String(ahora.getSeconds()).padStart(2, '0');
+
+    const fechaHoraActual = `${dia}/${mes}/${año} ${hora}:${minutos}:${segundos}`;
+    
+    document.getElementById('fechaHora').value = fechaHoraActual;
 }
+
+function iniciarReloj() {
+    cargarFechaHora();           // muestra de inmediato
+    setInterval(cargarFechaHora, 1000);
+}
+
+function fijarFechaDeBusqueda(fechaString) {
+    busquedaCargada = true;
+    
+    const input = document.getElementById('fechaHora');
+    if (!input) return;
+
+    input.value = fechaString;
+    input.readOnly = true;
+    input.style.backgroundColor = "#e9ecef";
+    input.style.color = "#495057";
+    input.style.cursor = "default";
+    input.style.borderColor = "#cbd5e1";
+    input.title = "Fecha y hora registrada del protocolo (no editable)";
+}
+
+function resetearRelojEnVivo() {
+    busquedaCargada = false;
+    
+    const input = document.getElementById('fechaHora');
+    if (input) {
+        input.readOnly = false;
+        input.style.backgroundColor = "";
+        input.style.color = "";
+        input.style.cursor = "text";
+        input.style.borderColor = "";
+        input.title = "Fecha y hora actual (en vivo)";
+        cargarFechaHora();  // pone hora actual inmediatamente
+    }
+}
+
+// Inicio automático del reloj
+window.addEventListener('load', () => {
+    iniciarReloj();
+});
 
 // ==================== FORMATO RUT ====================
 function soloNumerosYK(e) {
@@ -486,103 +534,141 @@ function guardarImprimir() {
     window.datosParaGuardar = datos;
 
     const htmlContent = `
-    <!DOCTYPE html>
-    <html lang="es">
-    <head>
-        <meta charset="UTF-8">
-        <title>Protocolo Operatorio</title>
-        <style>
-            body { font-family: "Times New Roman", serif; font-size: 9.5pt; padding: 15px 20px; line-height: 1.35; }
-            .header { display: flex; align-items: center; justify-content: space-between; border-bottom: 3px double #000; padding-bottom: 8px; margin-bottom: 14px; }
-            .header img { height: 62px; }
-            .header h1 { font-size: 21pt; margin:0; text-align:center; font-weight:bold; flex-grow:1; }
-            .header .fecha { font-size: 10pt; white-space: nowrap; }
-            h3 { font-size: 11.5pt; margin:12px 0 5px; border-bottom:1px solid #000; font-weight:bold; }
-            table { width:100%; border-collapse:collapse; margin:5px 0; }
-            td, th { padding:2px 4px; font-size:9.5pt; }
-            .tabla-5col th { font-weight:bold; text-align:left; background:#f0f8f5; }
-            .descripcion { text-align:justify; margin:8px 0 30px 0; border-bottom: 2px solid #000; padding-bottom: 15px; min-height:90px; }
-            .firma { margin-top: 100px; text-align: center; display: none; }
-            .firma-linea { border-top: 2px solid #000; width: 350px; margin: 20px auto 8px auto; padding-top: 8px; font-weight: bold; font-size: 11pt; }
-            .botones-print { text-align:center; margin:60px 0 40px 0; padding:20px 0; }
-            .botones-print button { padding:14px 40px; font-size:18pt; margin:0 30px; border-radius:10px; cursor:pointer; font-weight:bold; transition:all 0.3s ease; }
-            .botones-print button:first-child { background:#00a94f; color:white; border:none; }
-            .botones-print button:first-child:hover { background:#ffed00; color:#00a94f; transform:translateY(-4px); box-shadow:0 8px 20px rgba(0,169,79,0.4); }
-            .botones-print button:last-child { background:white; color:#00a94f; border:3px solid #00a94f; }
-            .botones-print button:last-child:hover { background:#f0f8f5; transform:translateY(-4px); box-shadow:0 8px 20px rgba(0,169,79,0.3); }
-            @media print { .botones-print { display:none !important; } .firma { display:block !important; } }
-        </style>
-    </head>
-    <body onload="alert('Revise cuidadosamente la información antes de imprimir.\\n\\nLos datos se guardarán automáticamente al hacer clic en IMPRIMIR.')">
-        <div class="header">
-            <img src="logo.png" alt="Logo">
-            <h1>PROTOCOLO OPERATORIO</h1>
-            <div class="fecha">${datos.fechaHora}</div>
-        </div>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Protocolo Operatorio</title>
+    <style>
+        body { font-family: "Times New Roman", serif; font-size: 9.5pt; padding: 15px 20px; line-height: 1.35; }
+        .header { display: flex; align-items: center; justify-content: space-between; border-bottom: 3px double #000; padding-bottom: 8px; margin-bottom: 14px; }
+        .header img { height: 62px; }
+        .header h1 { font-size: 21pt; margin:0; text-align:center; font-weight:bold; flex-grow:1; }
+        .header .fecha { font-size: 10pt; white-space: nowrap; }
+        h3 { font-size: 11.5pt; margin:12px 0 5px; border-bottom:1px solid #000; font-weight:bold; }
+        table { width:100%; border-collapse:collapse; margin:5px 0; }
+        td, th { padding:2px 4px; font-size:9.5pt; }
+        .tabla-5col th { font-weight:bold; text-align:left; background:#f0f8f5; }
+        .descripcion { text-align:justify; margin:8px 0 30px 0; border-bottom: 2px solid #000; padding-bottom: 15px; min-height:90px; }
+        .firma { margin-top: 100px; text-align: center; display: none; }
+        .firma-linea { border-top: 2px solid #000; width: 350px; margin: 20px auto 8px auto; padding-top: 8px; font-weight: bold; font-size: 11pt; }
+        .botones-print { text-align:center; margin:60px 0 40px 0; padding:20px 0; }
+        .botones-print button { padding:14px 40px; font-size:18pt; margin:0 30px; border-radius:10px; cursor:pointer; font-weight:bold; transition:all 0.3s ease; }
+        .botones-print button:first-child { background:#00a94f; color:white; border:none; }
+        .botones-print button:first-child:hover { background:#ffed00; color:#00a94f; transform:translateY(-4px); box-shadow:0 8px 20px rgba(0,169,79,0.4); }
+        .botones-print button:last-child { background:white; color:#00a94f; border:3px solid #00a94f; }
+        .botones-print button:last-child:hover { background:#f0f8f5; transform:translateY(-4px); box-shadow:0 8px 20px rgba(0,169,79,0.3); }
+        @media print { 
+            .botones-print { display:none !important; } 
+            .firma { display:block !important; } 
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body>
+    <div class="header">
+        <img src="logo.png" alt="Logo">
+        <h1>PROTOCOLO OPERATORIO</h1>
+        <div class="fecha">${datos.fechaHora}</div>
+    </div>
 
-        <h3>1. Datos del Paciente</h3>
-        <table><tr><td><strong>Nombre:</strong> ${datos.nombrePaciente} | <strong>RUT:</strong> ${datos.rut} | <strong>Edad:</strong> ${datos.edad} | <strong>Ficha:</strong> ${datos.ficha}</td></tr></table>
+    <h3>1. Datos del Paciente</h3>
+    <table><tr><td><strong>Nombre:</strong> ${datos.nombrePaciente || ''} | <strong>RUT:</strong> ${datos.rut || ''} | <strong>Edad:</strong> ${datos.edad || ''} | <strong>Ficha:</strong> ${datos.ficha || ''}</td></tr></table>
 
-        <h3>2. Intervenciones Realizadas</h3>
-        <table>
-            <tr><td><strong>Principal:</strong> ${datos.intervencion1}</td></tr>
-            ${datos.intervencion2 ? `<tr><td><strong>2da:</strong> ${datos.intervencion2}</td></tr>` : ''}
-            ${datos.intervencion3 ? `<tr><td><strong>3ra:</strong> ${datos.intervencion3}</td></tr>` : ''}
-            ${datos.intervencion4 ? `<tr><td><strong>4ta:</strong> ${datos.intervencion4}</td></tr>` : ''}
-        </table>
+    <h3>2. Intervenciones Realizadas</h3>
+    <table>
+        <tr><td><strong>Principal:</strong> ${datos.intervencion1 || ''}</td></tr>
+        ${datos.intervencion2 ? `<tr><td><strong>2da:</strong> ${datos.intervencion2}</td></tr>` : ''}
+        ${datos.intervencion3 ? `<tr><td><strong>3ra:</strong> ${datos.intervencion3}</td></tr>` : ''}
+        ${datos.intervencion4 ? `<tr><td><strong>4ta:</strong> ${datos.intervencion4}</td></tr>` : ''}
+    </table>
 
-        <h3>3. Diagnósticos</h3>
-        <table>
-            <tr><td><strong>Preoperatorio:</strong> ${datos.diagPre}</td></tr>
-            <tr><td><strong>Postoperatorio:</strong> ${datos.diagPost}</td></tr>
-        </table>
+    <h3>3. Diagnósticos</h3>
+    <table>
+        <tr><td><strong>Preoperatorio:</strong> ${datos.diagPre || ''}</td></tr>
+        <tr><td><strong>Postoperatorio:</strong> ${datos.diagPost || ''}</td></tr>
+    </table>
 
-        <h3>4. Equipo Quirúrgico y Especificaciones</h3>
-        <table class="tabla-5col">
-            <tr><th>Especialidad</th><th>1er Cirujano</th><th>2do Cirujano</th><th>Anestesiólogo</th><th>Tipo Anestesia</th></tr>
-            <tr><td>${datos.especialidad}</td><td>${datos.cirujano1}</td><td>${datos.cirujano2}</td><td>${datos.anestesiologo}</td><td>${datos.tipoAnestesia}</td></tr>
-            <tr><th>3er Cirujano</th><th>4to Cirujano</th><th>Aux. Anestesia</th><th>Enfermera</th><th>Modalidad</th></tr>
-            <tr><td>${datos.cirujano3}</td><td>${datos.cirujano4}</td><td>${datos.auxAnestesia}</td><td>${datos.enfermera}</td><td>${datos.modalidad}</td></tr>
-            <tr><th>Arsenalera</th><th>Pabellonera</th><th>N° Pabellón</th><th>Hora Inicio</th><th>Hora Término</th></tr>
-            <tr><td>${datos.arsenalera}</td><td>${datos.pabellonera}</td><td>${datos.pabellon}</td><td>${datos.horaInicio}</td><td>${datos.horaTermino}</td></tr>
-            <tr><td colspan="2"><strong>Biopsia:</strong> ${datos.biopsia}</td><td colspan="3"><strong>Cultivo:</strong> ${datos.cultivo}</td></tr>
-            <tr><td colspan="5"><strong>Destino del paciente:</strong> ${datos.destino || 'No especificado'}</td></tr>
-        </table>
+    <h3>4. Equipo Quirúrgico y Especificaciones</h3>
+    <table class="tabla-5col">
+        <tr><th>Especialidad</th><th>1er Cirujano</th><th>2do Cirujano</th><th>Anestesiólogo</th><th>Tipo Anestesia</th></tr>
+        <tr><td>${datos.especialidad || ''}</td><td>${datos.cirujano1 || ''}</td><td>${datos.cirujano2 || ''}</td><td>${datos.anestesiologo || ''}</td><td>${datos.tipoAnestesia || ''}</td></tr>
+        <tr><th>3er Cirujano</th><th>4to Cirujano</th><th>Aux. Anestesia</th><th>Enfermera</th><th>Modalidad</th></tr>
+        <tr><td>${datos.cirujano3 || ''}</td><td>${datos.cirujano4 || ''}</td><td>${datos.auxAnestesia || ''}</td><td>${datos.enfermera || ''}</td><td>${datos.modalidad || ''}</td></tr>
+        <tr><th>Arsenalera</th><th>Pabellonera</th><th>N° Pabellón</th><th>Hora Inicio</th><th>Hora Término</th></tr>
+        <tr><td>${datos.arsenalera || ''}</td><td>${datos.pabellonera || ''}</td><td>${datos.pabellon || ''}</td><td>${datos.horaInicio || ''}</td><td>${datos.horaTermino || ''}</td></tr>
+        <tr><td colspan="2"><strong>Biopsia:</strong> ${datos.biopsia || ''}</td><td colspan="3"><strong>Cultivo:</strong> ${datos.cultivo || ''}</td></tr>
+        <tr><td colspan="5"><strong>Destino del paciente:</strong> ${datos.destino || 'No especificado'}</td></tr>
+    </table>
 
-        <h3>5. Descripción de la Intervención</h3>
-        <div class="descripcion">${datos.descripcion.replace(/\n/g, '<br>')}</div>
+    <h3>5. Descripción de la Intervención</h3>
+    <div class="descripcion">${(datos.descripcion || '').replace(/\n/g, '<br>')}</div>
 
-        <div class="firma">
-            <div class="firma-linea">${datos.cirujano1 || '_________________________'}</div>
-            <div>NOMBRE Y FIRMA DEL CIRUJANO RESPONSABLE</div>
-        </div>
+    <div class="firma">
+        <div class="firma-linea">${datos.cirujano1 || '_________________________'}</div>
+        <div>NOMBRE Y FIRMA DEL CIRUJANO RESPONSABLE</div>
+    </div>
 
-        <div class="botones-print">
-            <button onclick="guardarEImprimir()">IMPRIMIR</button>
-            <button onclick="window.close()">CANCELAR</button>
-        </div>
+    <div class="botones-print">
+        <button onclick="guardarEImprimir()">IMPRIMIR</button>
+        <button onclick="window.close()">CANCELAR</button>
+    </div>
 
-        <script>
-            function guardarEImprimir() {
-                fetch('https://script.google.com/macros/s/AKfycbw8RT55rxV6ArtbumqzU9hGimyOddR3dR7QjbNERpUkCRxZAChBC2V0WGRGM_7DH46-8w/exec', {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(opener.datosParaGuardar)
-                });
-                window.print();
+    <script>
+        // SweetAlert simple con un solo botón (aviso)
+        window.onload = function() {
+            Swal.fire({
+                title: '¡Revisión obligatoria!',
+                html: \`
+                    <p style="text-align:left; font-size:1.1em;">
+                        Por favor, <strong>revise DETENIDAMENTE</strong> toda la información del protocolo antes de imprimir:
+                    </p>
+                    <ul style="text-align:left; margin:15px 0; padding-left:20px;">
+                        <li>Nombre, RUT, edad y ficha del paciente</li>
+                        <li>Intervenciones realizadas</li>
+                        <li>Diagnósticos pre y postoperatorios</li>
+                        <li>Equipo quirúrgico completo</li>
+                        <li>Horarios de inicio y término</li>
+                        <li>Descripción de la intervención y destino</li>
+                    </ul>
+                    <p style="color:#d32f2f; font-weight:bold;">
+                        Los datos se guardarán automáticamente al presionar el botón IMPRIMIR.<br>
+                        Una vez impreso, NO podrá modificarlos desde esta ventana.
+                    </p>
+                \`,
+                icon: 'warning',
+                confirmButtonText: 'Entendido → Continuar',
+                confirmButtonColor: '#00a94f',
+                showCancelButton: false,          // ← Solo un botón
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                width: '700px'
+            });
+        };
+
+        // Función llamada SOLO por el botón IMPRIMIR
+        function guardarEImprimir() {
+            fetch('https://script.google.com/macros/s/AKfycbw8RT55rxV6ArtbumqzU9hGimyOddR3dR7QjbNERpUkCRxZAChBC2V0WGRGM_7DH46-8w/exec', {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(opener.datosParaGuardar)
+            }).catch(err => console.error('Error al guardar (continúa imprimiendo):', err));
+
+            window.print();
+        }
+
+        // Después de imprimir → limpia formulario y cierra
+        window.onafterprint = function() {
+            if (opener && opener.postGuardarImprimir) {
+                opener.postGuardarImprimir();
             }
-
-            window.onafterprint = function() {
-                if (opener && opener.postGuardarImprimir) {
-                    opener.postGuardarImprimir();
-                }
-                window.close();
-            };
-        </script>
-    </body>
-    </html>
-    `;
+            window.close();
+        };
+    </script>
+</body>
+</html>
+`;
 
     printWindow.document.open();
     printWindow.document.write(htmlContent);
@@ -833,7 +919,11 @@ function cargarProtocolo(index) {
     const proto = window.protocolosEncontrados[index];
     if (!proto) return;
 
-    document.getElementById('fechaHora').value = formatearFechaHora(proto.fechaHora);
+    const fechaFormateada = formatearFechaHora(proto.fechaHora);
+    document.getElementById('fechaHora').value = fechaFormateada;
+
+    fijarFechaDeBusqueda(fechaFormateada);
+
     document.getElementById('nombrePaciente').value = proto.nombrePaciente || '';
     
     let rutCargado = (proto.rut || '').toString().trim();
@@ -929,7 +1019,7 @@ function limpiarFormulario() {
     document.querySelectorAll('input:not(#fechaHora), textarea, select').forEach(el => el.value = '');
     document.getElementById('especialidadSelect').value = '';
     filtrarCirujanos();
-    cargarFechaHora();
+    resetearRelojEnVivo();  // ← Cambio clave: reinicia el reloj en vivo
     document.getElementById('resultadosBusqueda').innerHTML = '';
     modoReimpresion = false;
     modoEdicion = false;
@@ -970,8 +1060,6 @@ function actualizarBotones() {
     }
 }
 
-
-
 function postEliminarRegistro() {
     // Mensaje elegante flotante para eliminación
     const mensaje = document.createElement('div');
@@ -1000,65 +1088,6 @@ function postEliminarRegistro() {
     actualizarBotones();
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// ==================== NORMALIZAR AL SELECCIONAR (excluyendo cirujanos) ====================
-/*document.querySelectorAll('input[list]').forEach(input => {
-    input.addEventListener('change', function () {
-        const listId = this.getAttribute('list');
-        const datalist = document.getElementById(listId);
-        if (!datalist) return;
-
-        const opciones = Array.from(datalist.options);
-        // Buscamos la opción cuyo textContent coincida con lo seleccionado
-        const seleccionada = opciones.find(opt => opt.textContent === this.value);
-        if (seleccionada) {
-            this.value = seleccionada.textContent; // ya es con acentos
-        } else {
-            // Si no encuentra por textContent, busca por value normalizado
-            const seleccionadaPorValue = opciones.find(opt => opt.value === quitarAcentos(this.value));
-            if (seleccionadaPorValue) {
-                this.value = seleccionadaPorValue.textContent;
-            }
-        }
-    });
-});*/
-
-
-
-
 // ==================== DESCRIPCIONES ESTÁTICAS DESDE JSON ====================
 let descripcionesMap = null;
 
@@ -1083,8 +1112,6 @@ async function cargarDescripcionesEstaticas() {
         console.log(`Descripciones estáticas cargadas: ${Object.keys(descripcionesMap).length} intervenciones`);
     } catch (error) {
         console.error('Error al cargar el archivo de descripciones:', error);
-        // Puedes mostrar un mensaje sutil al usuario si quieres:
-        // alert('No se pudieron cargar las descripciones predefinidas. Funcionará normalmente pero sin autocompletado de descripción.');
     }
 }
 
@@ -1105,68 +1132,15 @@ function aplicarDescripcionDesdeCache() {
     if (descripcionEncontrada) {
         document.getElementById('descripcion').value = descripcionEncontrada;
     }
-    // Si prefieres limpiar cuando no hay coincidencia:
-    // else {
-    //     document.getElementById('descripcion').value = '';
-    // }
 }
 
-// Inicialización
+// Inicialización adicional para descripciones
 document.addEventListener('DOMContentLoaded', function () {
-    // Cargar las descripciones al inicio
     cargarDescripcionesEstaticas();
 
     const intervencion1Input = document.getElementById('intervencion1');
     if (intervencion1Input) {
-        // Disparar cuando se selecciona del datalist o se completa
         intervencion1Input.addEventListener('change', aplicarDescripcionDesdeCache);
-        // También al salir del campo (útil si escriben manualmente)
         intervencion1Input.addEventListener('blur', aplicarDescripcionDesdeCache);
     }
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// ==================== NORMALIZAR AL SELECCIONAR (excluyendo cirujanos) ====================
-/*document.querySelectorAll('input[list]').forEach(input => {
-    input.addEventListener('change', function () {
-        const listId = this.getAttribute('list');
-        const datalist = document.getElementById(listId);
-        if (!datalist) return;
-
-        const opciones = Array.from(datalist.options);
-        // Buscamos la opción cuyo textContent coincida con lo seleccionado
-        const seleccionada = opciones.find(opt => opt.textContent === this.value);
-        if (seleccionada) {
-            this.value = seleccionada.textContent; // ya es con acentos
-        } else {
-            // Si no encuentra por textContent, busca por value normalizado
-            const seleccionadaPorValue = opciones.find(opt => opt.value === quitarAcentos(this.value));
-            if (seleccionadaPorValue) {
-                this.value = seleccionadaPorValue.textContent;
-            }
-        }
-    });
-});*/
-
