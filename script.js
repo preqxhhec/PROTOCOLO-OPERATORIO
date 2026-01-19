@@ -23,7 +23,11 @@ const camposObligatorios = [
     'horaInicio',
     'horaTermino',
     'descripcion',
-    'destino'
+    'destino',
+    'arsenalera',
+    'pabellonera',
+    'auxAnestesia',
+    'edad'
 ];
 
 function validarCamposObligatorios() {
@@ -367,7 +371,7 @@ function login() {
     const user = document.getElementById('usuario').value.trim();
     const pass = document.getElementById('password').value;
 
-    if (user === "admin" && pass === "Administrador1234") {
+    if (user === "admin" && pass === "1234") {
         document.getElementById('login').classList.add('hidden');
         document.getElementById('formulario').classList.remove('hidden');
         cargarFechaHora();
@@ -593,9 +597,9 @@ function guardarImprimir() {
     <table class="tabla-5col">
         <tr><th>Especialidad</th><th>1er Cirujano</th><th>2do Cirujano</th><th>Anestesiólogo</th><th>Tipo Anestesia</th></tr>
         <tr><td>${datos.especialidad || ''}</td><td>${datos.cirujano1 || ''}</td><td>${datos.cirujano2 || ''}</td><td>${datos.anestesiologo || ''}</td><td>${datos.tipoAnestesia || ''}</td></tr>
-        <tr><th>3er Cirujano</th><th>4to Cirujano</th><th>Aux. Anestesia</th><th>Enfermera</th><th>Modalidad</th></tr>
+        <tr><th>3er Cirujano</th><th>4to Cirujano</th><th>Aux. Anestesia</th><th>Enfermera (o) / Matron (a)</th><th>Modalidad</th></tr>
         <tr><td>${datos.cirujano3 || ''}</td><td>${datos.cirujano4 || ''}</td><td>${datos.auxAnestesia || ''}</td><td>${datos.enfermera || ''}</td><td>${datos.modalidad || ''}</td></tr>
-        <tr><th>Arsenalera</th><th>Pabellonera</th><th>N° Pabellón</th><th>Hora Inicio</th><th>Hora Término</th></tr>
+        <tr><th>Arsenalera (o)</th><th>Pabellonera (o)</th><th>N° Pabellón</th><th>Hora Inicio</th><th>Hora Término</th></tr>
         <tr><td>${datos.arsenalera || ''}</td><td>${datos.pabellonera || ''}</td><td>${datos.pabellon || ''}</td><td>${datos.horaInicio || ''}</td><td>${datos.horaTermino || ''}</td></tr>
         <tr><td colspan="2"><strong>Biopsia:</strong> ${datos.biopsia || ''}</td><td colspan="3"><strong>Cultivo:</strong> ${datos.cultivo || ''}</td></tr>
         <tr><td colspan="5"><strong>Destino del paciente:</strong> ${datos.destino || 'No especificado'}</td></tr>
@@ -760,9 +764,9 @@ function reimprimir() {
         <table class="tabla-5col">
             <tr><th>Especialidad</th><th>1er Cirujano</th><th>2do Cirujano</th><th>Anestesiólogo</th><th>Tipo Anestesia</th></tr>
             <tr><td>${datos.especialidad}</td><td>${datos.cirujano1}</td><td>${datos.cirujano2}</td><td>${datos.anestesiologo}</td><td>${datos.tipoAnestesia}</td></tr>
-            <tr><th>3er Cirujano</th><th>4to Cirujano</th><th>Aux. Anestesia</th><th>Enfermera</th><th>Modalidad</th></tr>
+            <tr><th>3er Cirujano</th><th>4to Cirujano</th><th>Aux. Anestesia</th><th>Enfermera (0) / Matron (a)</th><th>Modalidad</th></tr>
             <tr><td>${datos.cirujano3}</td><td>${datos.cirujano4}</td><td>${datos.auxAnestesia}</td><td>${datos.enfermera}</td><td>${datos.modalidad}</td></tr>
-            <tr><th>Arsenalera</th><th>Pabellonera</th><th>N° Pabellón</th><th>Hora Inicio</th><th>Hora Término</th></tr>
+            <tr><th>Arsenalera (o)</th><th>Pabellonera (o)</th><th>N° Pabellón</th><th>Hora Inicio</th><th>Hora Término</th></tr>
             <tr><td>${datos.arsenalera}</td><td>${datos.pabellonera}</td><td>${datos.pabellon}</td><td>${datos.horaInicio}</td><td>${datos.horaTermino}</td></tr>
             <tr><td colspan="2"><strong>Biopsia:</strong> ${datos.biopsia}</td><td colspan="3"><strong>Cultivo:</strong> ${datos.cultivo}</td></tr>
             <tr><td colspan="5"><strong>Destino del paciente:</strong> ${datos.destino || 'No especificado'}</td></tr>
