@@ -371,7 +371,7 @@ function login() {
     const user = document.getElementById('usuario').value.trim();
     const pass = document.getElementById('password').value;
 
-    if (user === "admin" && pass === "Administrador1234") {
+    if (user === "admin" && pass === "1234") {
         document.getElementById('login').classList.add('hidden');
         document.getElementById('formulario').classList.remove('hidden');
         cargarFechaHora();
@@ -1149,4 +1149,18 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 });
 
+
+
+// boton limpiar campos
+
+document.getElementById("btnLimpiar").addEventListener("click", function() {
+    // Mostrar mensaje de confirmación
+    let confirmar = confirm("¿Está seguro que desea borrar todos los campos?");
+    
+    if (confirmar) {
+        // Si el usuario confirma, limpiar todos los campos
+        limpiarFormulario();
+        actualizarBotones();
+            }
+        });
 
